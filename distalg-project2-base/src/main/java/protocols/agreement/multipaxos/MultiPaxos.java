@@ -101,23 +101,18 @@ public class MultiPaxos extends GenericProtocol {
     @Override
     public void init(Properties props) {
         heartbeatInterval = Long.parseLong(
-                props.getProperty("multipaxos.heartbeat_interval", String.valueOf(DEFAULT_HEARTBEAT_INTERVAL)));
+                props.getProperty("heartbeat_interval", String.valueOf(DEFAULT_HEARTBEAT_INTERVAL)));
 
         electionTimeoutMin = Long.parseLong(
-                props.getProperty("multipaxos.election_timeout_min", String.valueOf(DEFAULT_ELECTION_TIMEOUT_MIN)));
+                props.getProperty("election_timeout_min", String.valueOf(DEFAULT_ELECTION_TIMEOUT_MIN)));
 
         electionTimeoutMax = Long.parseLong(
-                props.getProperty("multipaxos.election_timeout_max", String.valueOf(DEFAULT_ELECTION_TIMEOUT_MAX)));
+                props.getProperty("election_timeout_max", String.valueOf(DEFAULT_ELECTION_TIMEOUT_MAX)));
 
         if (electionTimeoutMax <= electionTimeoutMin) {
-            throw new IllegalArgumentException("multipaxos.election_timeout_max must be greater than min");
+            throw new IllegalArgumentException("election_timeout_max must be greater than min");
         }
 
-        logger.info(
-                "MultiPaxos timers: heartbeat={}ms, electionTimeout=[{}, {}]ms",
-                heartbeatInterval,
-                electionTimeoutMin,
-                electionTimeoutMax);
     }
 
     private void uponChannelCreated(ChannelReadyNotification notification, short sourceProto) {
