@@ -8,17 +8,23 @@ import java.util.UUID;
 
 public class PaxosInstance {
 
+    // log slot number
     private final int instance;
 
+    // highest ballot this replica promised for this instance
     private Ballot promisedBallot;
-    private Ballot acceptedBallot;
 
+    // store the value this replica accepted for this instance
+    private Ballot acceptedBallot;
     private UUID acceptedOpId;
     private byte[] acceptedOperation;
 
+    // store final decision for this slot
     private UUID decidedOpId;
     private byte[] decidedOperation;
 
+    // used by leader to see the replies to the AcceptMessage
+    // it stores who replied ex: acceptOkQuorum = {replica1, replica2}
     private final Set<Host> acceptOkQuorum;
 
     public PaxosInstance(int instance) {
@@ -56,6 +62,7 @@ public class PaxosInstance {
         return acceptedOperation;
     }
 
+    // records that replica accepted a value
     public void accept(Ballot ballot, UUID opId, byte[] operation) {
         this.promisedBallot = ballot;
         this.acceptedBallot = ballot;
@@ -75,6 +82,7 @@ public class PaxosInstance {
         return decidedOperation;
     }
 
+    // records final decision
     public void decide(UUID opId, byte[] operation) {
         this.decidedOpId = opId;
         this.decidedOperation = operation;
