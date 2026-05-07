@@ -1,9 +1,7 @@
-2026-05-07 12:35:54:365 0 sec: 0 operations; est completion in 0 second 
-2026-05-07 12:35:59:337 5 sec: 1999 operations; 399.8 current ops/sec; est completion in 3 second [READ AverageLatency(us)=2540.23] [CLEANUP AverageLatency(us)=0.17] [UPDATE AverageLatency(us)=2753.33] 
-2026-05-07 12:36:04:338 10 sec: 1999 operations; 0 current ops/sec; est completion in 6 second    
-2026-05-07 12:36:09:337 15 sec: 1999 operations; 0 current ops/sec; est completion in 8 second    
-2026-05-07 12:36:14:337 20 sec: 1999 operations; 0 current ops/sec; est completion in 11 seconds    
-2026-05-07 12:36:19:337 25 sec: 1999 operations; 0 current ops/sec; est completion in 13 seconds    
-2026-05-07 12:36:24:337 30 sec: 1999 operations; 0 current ops/sec; est completion in 16 seconds    
-2026-05-07 12:36:29:337 35 sec: 1999 operations; 0 current ops/sec; est completion in 18 seconds    
-2026-05-07 12:36:34:337 40 sec: 1999 operations; 0 current ops/sec; est completion in 21 seconds    
+2026-05-07 12:49:23:593 0 sec: 0 operations; est completion in 0 second 
+2026-05-07 12:49:28:565 5 sec: 27386 operations; 5477.2 current ops/sec; est completion in 9 minutes [READ AverageLatency(us)=1333.89] [UPDATE AverageLatency(us)=1379.09] 
+2026-05-07 12:49:33:565 10 sec: 75762 operations; 9675.2 current ops/sec; est completion in 6 minutes [READ AverageLatency(us)=912.28] [UPDATE AverageLatency(us)=940.86] 
+2026-05-07 12:49:38:565 15 sec: 123013 operations; 9450.2 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=932.1] [UPDATE AverageLatency(us)=967.15] 
+2026-05-07 12:49:43:565 20 sec: 170704 operations; 9538.2 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=925.65] [UPDATE AverageLatency(us)=956.17] 
+2026-05-07 12:49:48:565 25 sec: 217985 operations; 9456.2 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=937.92] [UPDATE AverageLatency(us)=960.27] 
+2026-05-07 12:49:53:565 30 sec: 265494 operations; 9501.8 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=933.92] [UPDATE AverageLatency(us)=955.42] 
