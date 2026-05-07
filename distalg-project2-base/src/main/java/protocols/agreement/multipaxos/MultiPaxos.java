@@ -106,17 +106,40 @@ public class MultiPaxos extends GenericProtocol {
         logger.info("MultiPaxos joined. Membership: {}", membership);
 
         /*
-         * Temporary deterministic leader.
-         * Replace/extend this with real leader change logic.
+         * Bootstrap case:
+         *
+         * The first replica in the initial membership is the initial leader.
+         * Since the system is starting from an empty state, there are no previous
+         * accepted values to recover, so the initial leader can safely start with
+         * ballot 1.
+         *
+         * Later leader changes should still use Phase 1.
          */
         Host first = membership.get(0);
 
         if (myself.equals(first)) {
-            startPhase1();
+            becomeInitialLeader();
         } else {
+            amLeader = false;
             currentLeader = first;
             triggerNotification(new LeaderChangeNotification(first));
         }
+    }
+
+    private void becomeInitialLeader() {
+        ballotNumber = 1;
+
+        Ballot initialBallot = new Ballot(ballotNumber, myself.toString());
+
+        leaderBallot = initialBallot;
+        promisedBallot = initialBallot;
+
+        amLeader = true;
+        currentLeader = myself;
+
+        logger.info("Became initial MultiPaxos leader with ballot {}", leaderBallot);
+
+        triggerNotification(new LeaderChangeNotification(myself));
     }
 
     private void startPhase1() {
@@ -280,7 +303,9 @@ public class MultiPaxos extends GenericProtocol {
                     instance.getAcceptedOperation());
 
             for (Host h : membership) {
-                sendMessage(decision, h);
+                if (!h.equals(myself)) {
+                    sendMessage(decision, h);
+                }
             }
 
             deliverDecision(instance);
