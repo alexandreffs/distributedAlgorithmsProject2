@@ -52,7 +52,7 @@ public class Main {
         // Agreement Protocol
         GenericProtocol agreement;
 
-        String agreementType = props.getProperty("agreement", "raft").toLowerCase();
+        String agreementType = props.getProperty("agreement", "multipaxos").toLowerCase();
 
         switch (agreementType) {
             case "raft":

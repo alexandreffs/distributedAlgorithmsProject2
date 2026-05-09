@@ -1,7 +1,10 @@
-2026-05-07 12:49:23:593 0 sec: 0 operations; est completion in 0 second 
-2026-05-07 12:49:28:565 5 sec: 27386 operations; 5477.2 current ops/sec; est completion in 9 minutes [READ AverageLatency(us)=1333.89] [UPDATE AverageLatency(us)=1379.09] 
-2026-05-07 12:49:33:565 10 sec: 75762 operations; 9675.2 current ops/sec; est completion in 6 minutes [READ AverageLatency(us)=912.28] [UPDATE AverageLatency(us)=940.86] 
-2026-05-07 12:49:38:565 15 sec: 123013 operations; 9450.2 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=932.1] [UPDATE AverageLatency(us)=967.15] 
-2026-05-07 12:49:43:565 20 sec: 170704 operations; 9538.2 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=925.65] [UPDATE AverageLatency(us)=956.17] 
-2026-05-07 12:49:48:565 25 sec: 217985 operations; 9456.2 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=937.92] [UPDATE AverageLatency(us)=960.27] 
-2026-05-07 12:49:53:565 30 sec: 265494 operations; 9501.8 current ops/sec; est completion in 5 minutes [READ AverageLatency(us)=933.92] [UPDATE AverageLatency(us)=955.42] 
+2026-05-09 17:06:12:640 0 sec: 0 operations; est completion in 0 second 
+2026-05-09 17:06:17:618 5 sec: 21648 operations; 4329.6 current ops/sec; est completion in 1 minute [READ AverageLatency(us)=1546.25] [UPDATE AverageLatency(us)=1941.23] 
+2026-05-09 17:06:25:165 12 sec: 65978 operations; 5873.08 current ops/sec; est completion in 45 seconds [READ AverageLatency(us)=995.5] [UPDATE AverageLatency(us)=1028.14] 
+2026-05-09 17:06:30:165 17 sec: 110397 operations; 8883.8 current ops/sec; est completion in 31 seconds [READ AverageLatency(us)=990.39] [UPDATE AverageLatency(us)=1030.53] 
+2026-05-09 17:06:35:165 22 sec: 156609 operations; 9242.4 current ops/sec; est completion in 21 seconds [READ AverageLatency(us)=955.63] [UPDATE AverageLatency(us)=987.55] 
+2026-05-09 17:06:40:165 27 sec: 201813 operations; 9040.8 current ops/sec; est completion in 14 seconds [READ AverageLatency(us)=975.01] [UPDATE AverageLatency(us)=1011.11] 
+2026-05-09 17:06:45:165 32 sec: 241259 operations; 7889.2 current ops/sec; est completion in 8 second [READ AverageLatency(us)=991.63] [CLEANUP AverageLatency(us)=0] [UPDATE AverageLatency(us)=1023.15] 
+2026-05-09 17:06:50:165 37 sec: 269673 operations; 5682.8 current ops/sec; est completion in 5 second [READ AverageLatency(us)=1036.34]  [UPDATE AverageLatency(us)=1071.66] 
+2026-05-09 17:06:55:165 42 sec: 297417 operations; 5548.8 current ops/sec; est completion in 1 second [READ AverageLatency(us)=1061.48]  [UPDATE AverageLatency(us)=1097.7] 
+2026-05-09 17:07:00:640 48 sec: 300000 operations; 471.78 current ops/sec; [READ AverageLatency(us)=2486.7] [CLEANUP AverageLatency(us)=0.17] [UPDATE AverageLatency(us)=1462.87] 

@@ -35,6 +35,13 @@ public class Raft extends GenericProtocol {
     private static final long DEFAULT_ELECTION_TIMEOUT_MIN = 2000;
     private static final long DEFAULT_ELECTION_TIMEOUT_MAX = 6000;
 
+    /*
+     * Maximum number of log entries sent in one AppendEntries message.
+     * Without this, the leader may send very large log suffixes when the log grows,
+     * which causes throughput to collapse over time.
+     */
+    private static final int MAX_APPEND_ENTRIES_BATCH = 64;
+
     private Host myself;
     private List<Host> membership;
     private int channelId;
@@ -59,6 +66,13 @@ public class Raft extends GenericProtocol {
 
     // highest log index known to be replicated on that follower
     private final Map<Host, Integer> matchIndex;
+
+    /*
+     * Prevents flooding a follower with many overlapping AppendEntries messages.
+     * If appendInFlight[follower] is true, the leader waits for a reply before
+     * sending the next batch to that follower.
+     */
+    private final Map<Host, Boolean> appendInFlight;
 
     // for election
     private final Set<Host> votesReceived;
@@ -90,6 +104,7 @@ public class Raft extends GenericProtocol {
 
         this.nextIndex = new HashMap<>();
         this.matchIndex = new HashMap<>();
+        this.appendInFlight = new HashMap<>();
         this.votesReceived = new HashSet<>();
 
         this.heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL;
@@ -271,10 +286,23 @@ public class Raft extends GenericProtocol {
             return;
         }
 
-        if (msg.getTerm() >= currentTerm) {
+        if (msg.getTerm() > currentTerm) {
             boolean leaderChanged = currentLeader == null || !currentLeader.equals(from);
 
             becomeFollower(msg.getTerm(), from);
+
+            if (leaderChanged) {
+                triggerNotification(new LeaderChangeNotification(from));
+            }
+        } else {
+            boolean leaderChanged = currentLeader == null || !currentLeader.equals(from);
+
+            if (role != RaftRole.FOLLOWER) {
+                role = RaftRole.FOLLOWER;
+                cancelHeartbeatTimer();
+                votesReceived.clear();
+            }
+
             currentLeader = from;
 
             if (leaderChanged) {
@@ -298,6 +326,7 @@ public class Raft extends GenericProtocol {
         for (LogEntry entry : msg.getEntries()) {
             if (entry.getIndex() < log.size()) {
                 LogEntry existing = log.get(entry.getIndex());
+
                 if (existing.getTerm() != entry.getTerm()) {
                     truncateLogFrom(entry.getIndex());
                     log.add(entry);
@@ -313,6 +342,11 @@ public class Raft extends GenericProtocol {
             applyCommittedEntries();
         }
 
+        /*
+         * Reply with the highest log index known to match the leader.
+         * Since this implementation appends entries sequentially, lastLogIndex() is
+         * enough after a successful append.
+         */
         sendToOther(new AppendEntriesReplyMessage(currentTerm, true, lastLogIndex()), from);
     }
 
@@ -329,10 +363,24 @@ public class Raft extends GenericProtocol {
             return;
         }
 
+        /*
+         * The follower has replied, so the previous AppendEntries is no longer in
+         * flight.
+         */
+        appendInFlight.put(from, false);
+
         if (msg.isSuccess()) {
             matchIndex.put(from, msg.getMatchIndex());
             nextIndex.put(from, msg.getMatchIndex() + 1);
+
             updateCommitIndex();
+
+            /*
+             * If the follower is still behind, continue with the next batch.
+             */
+            if (nextIndex.getOrDefault(from, lastLogIndex() + 1) <= lastLogIndex()) {
+                sendToOtherAppendEntries(from);
+            }
         } else {
             int next = nextIndex.getOrDefault(from, lastLogIndex() + 1);
             nextIndex.put(from, Math.max(1, next - 1));
@@ -341,13 +389,32 @@ public class Raft extends GenericProtocol {
     }
 
     private void sendAppendEntries(Host h) {
+        if (h.equals(myself)) {
+            return;
+        }
+
+        /*
+         * Do not send another AppendEntries to the same follower while waiting for its
+         * previous reply.
+         */
+        if (appendInFlight.getOrDefault(h, false)) {
+            return;
+        }
+
         int next = nextIndex.getOrDefault(h, lastLogIndex() + 1);
 
         int prevLogIndex = next - 1;
         int prevLogTerm = termAt(prevLogIndex);
 
         List<LogEntry> entries = new ArrayList<>();
-        for (int i = next; i < log.size(); i++) {
+
+        /*
+         * Send only a bounded batch of entries.
+         * This prevents very large AppendEntries messages as the log grows.
+         */
+        int lastToSend = Math.min(log.size(), next + MAX_APPEND_ENTRIES_BATCH);
+
+        for (int i = next; i < lastToSend; i++) {
             entries.add(log.get(i));
         }
 
@@ -358,6 +425,7 @@ public class Raft extends GenericProtocol {
                 commitIndex,
                 entries);
 
+        appendInFlight.put(h, true);
         sendToOther(msg, h);
     }
 
@@ -391,12 +459,14 @@ public class Raft extends GenericProtocol {
 
         nextIndex.clear();
         matchIndex.clear();
+        appendInFlight.clear();
 
         int next = lastLogIndex() + 1;
 
         for (Host h : membership) {
             nextIndex.put(h, next);
             matchIndex.put(h, 0);
+            appendInFlight.put(h, false);
         }
 
         matchIndex.put(myself, lastLogIndex());
@@ -471,8 +541,19 @@ public class Raft extends GenericProtocol {
             lastApplied++;
             LogEntry entry = log.get(lastApplied);
 
+            /*
+             * Raft log starts at index 1, but the StateMachine agreement instances start
+             * at 0.
+             *
+             * Therefore:
+             * Raft log index 1 -> StateMachine instance 0
+             * Raft log index 2 -> StateMachine instance 1
+             * Raft log index 3 -> StateMachine instance 2
+             */
+            int stateMachineInstance = entry.getIndex() - 1;
+
             triggerNotification(new DecidedNotification(
-                    entry.getIndex(),
+                    stateMachineInstance,
                     entry.getOpId(),
                     entry.getOperation()));
         }
@@ -619,14 +700,34 @@ public class Raft extends GenericProtocol {
     private void uponAddReplica(AddReplicaRequest request, short sourceProto) {
         logger.debug("Received {}", request);
         membership.add(request.getReplica());
+
+        if (role == RaftRole.LEADER) {
+            nextIndex.put(request.getReplica(), lastLogIndex() + 1);
+            matchIndex.put(request.getReplica(), 0);
+            appendInFlight.put(request.getReplica(), false);
+            sendToOtherAppendEntries(request.getReplica());
+        }
     }
 
     private void uponRemoveReplica(RemoveReplicaRequest request, short sourceProto) {
         logger.debug("Received {}", request);
         membership.remove(request.getReplica());
+
+        nextIndex.remove(request.getReplica());
+        matchIndex.remove(request.getReplica());
+        appendInFlight.remove(request.getReplica());
+        votesReceived.remove(request.getReplica());
     }
 
     private void uponMsgFail(ProtoMessage msg, Host host, short destProto, Throwable throwable, int channelId) {
         logger.error("Message {} to {} failed, reason: {}", msg, host, throwable);
+
+        /*
+         * If an AppendEntries send fails, clear the in-flight flag.
+         * Otherwise the leader may never send another AppendEntries to this follower.
+         */
+        if (msg instanceof AppendEntriesMessage) {
+            appendInFlight.put(host, false);
+        }
     }
 }

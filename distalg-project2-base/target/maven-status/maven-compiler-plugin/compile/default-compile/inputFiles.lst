@@ -10,6 +10,7 @@ C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-b
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\statemachine\StateMachine.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\IncorrectAgreement.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\messages\RequestVoteMessage.java
+C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\timers\ElectionTimer.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\notifications\DecidedNotification.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\messages\AppendEntriesReplyMessage.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\RaftRole.java
@@ -17,11 +18,15 @@ C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-b
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\Raft.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\messages\RequestVoteReplyMessage.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\requests\AddReplicaRequest.java
+C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\multipaxos\timers\HeartbeatTimer.java
+C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\multipaxos\timers\LeaderTimeoutTimer.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\notifications\JoinedNotification.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\requests\ProposeRequest.java
+C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\multipaxos\messages\HeartbeatMessage.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\multipaxos\PaxosInstance.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\statemachine\requests\OrderRequest.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\multipaxos\Ballot.java
+C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\raft\timers\HeartbeatTimer.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\utils\InterfaceToIp.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\multipaxos\messages\PrepareMessage.java
 C:\Users\alexa\Documents\GitHub\distributedAlgorithmsProject2\distalg-project2-base\src\main\java\protocols\agreement\messages\BroadcastMessage.java
