@@ -6,8 +6,12 @@ import java.util.UUID;
 
 public class LogEntry {
 
+    // The position of the entry in the log
     private final int index;
+
+    // The term number when the leader created the entry
     private final int term;
+
     private final UUID opId;
     private final byte[] operation;
 

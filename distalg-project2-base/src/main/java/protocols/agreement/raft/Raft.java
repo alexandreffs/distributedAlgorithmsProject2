@@ -10,6 +10,8 @@ import protocols.agreement.raft.messages.AppendEntriesMessage;
 import protocols.agreement.raft.messages.AppendEntriesReplyMessage;
 import protocols.agreement.raft.messages.RequestVoteMessage;
 import protocols.agreement.raft.messages.RequestVoteReplyMessage;
+import protocols.agreement.raft.timers.ElectionTimer;
+import protocols.agreement.raft.timers.HeartbeatTimer;
 import protocols.agreement.requests.AddReplicaRequest;
 import protocols.agreement.requests.ProposeRequest;
 import protocols.agreement.requests.RemoveReplicaRequest;
@@ -29,6 +31,10 @@ public class Raft extends GenericProtocol {
     public static final short PROTOCOL_ID = AgreementProtocol.PROTOCOL_ID;
     public static final String PROTOCOL_NAME = "Raft";
 
+    private static final long DEFAULT_HEARTBEAT_INTERVAL = 500;
+    private static final long DEFAULT_ELECTION_TIMEOUT_MIN = 2000;
+    private static final long DEFAULT_ELECTION_TIMEOUT_MAX = 6000;
+
     private Host myself;
     private List<Host> membership;
     private int channelId;
@@ -41,13 +47,30 @@ public class Raft extends GenericProtocol {
 
     private final List<LogEntry> log;
 
+    // highest log index known to be committed
     private int commitIndex;
+
+    // highest log entry already delivered to the StateMachine
     private int lastApplied;
 
+    // for leaders
+    // The next AppendEntries to replicaX should start from log index y
     private final Map<Host, Integer> nextIndex;
+
+    // highest log index known to be replicated on that follower
     private final Map<Host, Integer> matchIndex;
 
+    // for election
     private final Set<Host> votesReceived;
+
+    private long heartbeatInterval;
+    private long electionTimeoutMin;
+    private long electionTimeoutMax;
+
+    private long electionTimerId;
+    private long heartbeatTimerId;
+
+    private final Random random;
 
     public Raft(Properties props) throws IOException, HandlerRegistrationException {
         super(PROTOCOL_NAME, PROTOCOL_ID);
@@ -69,9 +92,21 @@ public class Raft extends GenericProtocol {
         this.matchIndex = new HashMap<>();
         this.votesReceived = new HashSet<>();
 
+        this.heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL;
+        this.electionTimeoutMin = DEFAULT_ELECTION_TIMEOUT_MIN;
+        this.electionTimeoutMax = DEFAULT_ELECTION_TIMEOUT_MAX;
+
+        this.electionTimerId = -1;
+        this.heartbeatTimerId = -1;
+
+        this.random = new Random();
+
         registerRequestHandler(ProposeRequest.REQUEST_ID, this::uponProposeRequest);
         registerRequestHandler(AddReplicaRequest.REQUEST_ID, this::uponAddReplica);
         registerRequestHandler(RemoveReplicaRequest.REQUEST_ID, this::uponRemoveReplica);
+
+        registerTimerHandler(ElectionTimer.TIMER_ID, this::uponElectionTimer);
+        registerTimerHandler(HeartbeatTimer.TIMER_ID, this::uponHeartbeatTimer);
 
         subscribeNotification(ChannelReadyNotification.NOTIFICATION_ID, this::uponChannelCreated);
         subscribeNotification(JoinedNotification.NOTIFICATION_ID, this::uponJoinedNotification);
@@ -79,8 +114,25 @@ public class Raft extends GenericProtocol {
 
     @Override
     public void init(Properties props) {
-        // TODO: add election timeout and heartbeat timers.
-        // For now, leader can be selected deterministically after JoinedNotification.
+        heartbeatInterval = Long.parseLong(
+                props.getProperty("raft.heartbeat_interval", String.valueOf(DEFAULT_HEARTBEAT_INTERVAL)));
+
+        electionTimeoutMin = Long.parseLong(
+                props.getProperty("raft.election_timeout_min", String.valueOf(DEFAULT_ELECTION_TIMEOUT_MIN)));
+
+        electionTimeoutMax = Long.parseLong(
+                props.getProperty("raft.election_timeout_max", String.valueOf(DEFAULT_ELECTION_TIMEOUT_MAX)));
+
+        if (electionTimeoutMax <= electionTimeoutMin) {
+            throw new IllegalArgumentException(
+                    "raft.election_timeout_max must be greater than raft.election_timeout_min");
+        }
+
+        logger.info(
+                "Raft timers: heartbeat={}ms, electionTimeout=[{}, {}]ms",
+                heartbeatInterval,
+                electionTimeoutMin,
+                electionTimeoutMax);
     }
 
     private void uponChannelCreated(ChannelReadyNotification notification, short sourceProto) {
@@ -116,19 +168,17 @@ public class Raft extends GenericProtocol {
         logger.info("Raft joined. Membership: {}", membership);
 
         /*
-         * Temporary deterministic leader.
-         * Replace this later with real randomized Raft elections.
+         * No deterministic leader.
+         * Every replica starts as FOLLOWER and waits for a randomized election timeout.
+         * The first replica whose timeout expires becomes CANDIDATE and starts an
+         * election.
          */
-        Host first = membership.get(0);
-        currentLeader = first;
+        role = RaftRole.FOLLOWER;
+        currentLeader = null;
+        votedFor = null;
+        votesReceived.clear();
 
-        if (myself.equals(first)) {
-            becomeLeader();
-        } else {
-            becomeFollower(currentTerm, first);
-        }
-
-        triggerNotification(new LeaderChangeNotification(currentLeader));
+        resetElectionTimer();
     }
 
     private void uponProposeRequest(ProposeRequest request, short sourceProto) {
@@ -146,9 +196,7 @@ public class Raft extends GenericProtocol {
         matchIndex.put(myself, index);
 
         for (Host h : membership) {
-            if (!h.equals(myself)) {
-                sendAppendEntries(h);
-            }
+            sendToOtherAppendEntries(h);
         }
 
         /*
@@ -172,6 +220,8 @@ public class Raft extends GenericProtocol {
             }
 
             boolean notVotedYet = votedFor == null || votedFor.equals(from);
+
+            // prevents a replica with an old log from becoming leader
             boolean candidateLogOk = isCandidateLogAtLeastAsUpToDate(
                     msg.getLastLogIndex(),
                     msg.getLastLogTerm());
@@ -179,10 +229,16 @@ public class Raft extends GenericProtocol {
             if (notVotedYet && candidateLogOk) {
                 votedFor = from;
                 voteGranted = true;
+
+                /*
+                 * After granting a vote, reset the election timer.
+                 * This avoids starting another election immediately in the same term.
+                 */
+                resetElectionTimer();
             }
         }
 
-        sendMessage(new RequestVoteReplyMessage(currentTerm, voteGranted), from);
+        sendToOther(new RequestVoteReplyMessage(currentTerm, voteGranted), from);
     }
 
     private void uponRequestVoteReplyMessage(RequestVoteReplyMessage msg, Host from, short sourceProto, int channelId) {
@@ -211,21 +267,34 @@ public class Raft extends GenericProtocol {
         logger.debug("Received {} from {}", msg, from);
 
         if (msg.getTerm() < currentTerm) {
-            sendMessage(new AppendEntriesReplyMessage(currentTerm, false, lastLogIndex()), from);
+            sendToOther(new AppendEntriesReplyMessage(currentTerm, false, lastLogIndex()), from);
             return;
         }
 
         if (msg.getTerm() >= currentTerm) {
+            boolean leaderChanged = currentLeader == null || !currentLeader.equals(from);
+
             becomeFollower(msg.getTerm(), from);
             currentLeader = from;
-            triggerNotification(new LeaderChangeNotification(from));
+
+            if (leaderChanged) {
+                triggerNotification(new LeaderChangeNotification(from));
+            }
+
+            /*
+             * AppendEntries is also the Raft heartbeat.
+             * Any valid AppendEntries from the current leader resets the election timeout.
+             */
+            resetElectionTimer();
         }
 
+        // log consistency check
         if (!logContainsEntry(msg.getPrevLogIndex(), msg.getPrevLogTerm())) {
-            sendMessage(new AppendEntriesReplyMessage(currentTerm, false, lastLogIndex()), from);
+            sendToOther(new AppendEntriesReplyMessage(currentTerm, false, lastLogIndex()), from);
             return;
         }
 
+        // repair inconsistent logs
         for (LogEntry entry : msg.getEntries()) {
             if (entry.getIndex() < log.size()) {
                 LogEntry existing = log.get(entry.getIndex());
@@ -238,12 +307,13 @@ public class Raft extends GenericProtocol {
             }
         }
 
+        // learn the leader commit and apply them
         if (msg.getLeaderCommit() > commitIndex) {
             commitIndex = Math.min(msg.getLeaderCommit(), lastLogIndex());
             applyCommittedEntries();
         }
 
-        sendMessage(new AppendEntriesReplyMessage(currentTerm, true, lastLogIndex()), from);
+        sendToOther(new AppendEntriesReplyMessage(currentTerm, true, lastLogIndex()), from);
     }
 
     private void uponAppendEntriesReplyMessage(AppendEntriesReplyMessage msg, Host from, short sourceProto,
@@ -266,7 +336,7 @@ public class Raft extends GenericProtocol {
         } else {
             int next = nextIndex.getOrDefault(from, lastLogIndex() + 1);
             nextIndex.put(from, Math.max(1, next - 1));
-            sendAppendEntries(from);
+            sendToOtherAppendEntries(from);
         }
     }
 
@@ -288,15 +358,24 @@ public class Raft extends GenericProtocol {
                 commitIndex,
                 entries);
 
-        sendMessage(msg, h);
+        sendToOther(msg, h);
     }
 
     private void becomeFollower(int term, Host leader) {
+        boolean termChanged = term > currentTerm;
+
         role = RaftRole.FOLLOWER;
         currentTerm = term;
         currentLeader = leader;
-        votedFor = null;
+
+        if (termChanged) {
+            votedFor = null;
+        }
+
         votesReceived.clear();
+
+        cancelHeartbeatTimer();
+        resetElectionTimer();
 
         logger.info("Became FOLLOWER term {}, leader {}", currentTerm, currentLeader);
     }
@@ -304,6 +383,11 @@ public class Raft extends GenericProtocol {
     private void becomeLeader() {
         role = RaftRole.LEADER;
         currentLeader = myself;
+
+        if (electionTimerId != -1) {
+            cancelTimer(electionTimerId);
+            electionTimerId = -1;
+        }
 
         nextIndex.clear();
         matchIndex.clear();
@@ -319,10 +403,10 @@ public class Raft extends GenericProtocol {
 
         logger.info("Became LEADER term {}", currentTerm);
 
+        startHeartbeatTimer();
+
         for (Host h : membership) {
-            if (!h.equals(myself)) {
-                sendAppendEntries(h);
-            }
+            sendToOtherAppendEntries(h);
         }
     }
 
@@ -330,8 +414,13 @@ public class Raft extends GenericProtocol {
         role = RaftRole.CANDIDATE;
         currentTerm++;
         votedFor = myself;
+        currentLeader = null;
         votesReceived.clear();
         votesReceived.add(myself);
+
+        logger.info("Starting election for term {}", currentTerm);
+
+        resetElectionTimer();
 
         RequestVoteMessage msg = new RequestVoteMessage(
                 currentTerm,
@@ -339,9 +428,12 @@ public class Raft extends GenericProtocol {
                 termAt(lastLogIndex()));
 
         for (Host h : membership) {
-            if (!h.equals(myself)) {
-                sendMessage(msg, h);
-            }
+            sendToOther(msg, h);
+        }
+
+        if (votesReceived.size() >= majority()) {
+            becomeLeader();
+            triggerNotification(new LeaderChangeNotification(myself));
         }
     }
 
@@ -365,9 +457,7 @@ public class Raft extends GenericProtocol {
                 applyCommittedEntries();
 
                 for (Host h : membership) {
-                    if (!h.equals(myself)) {
-                        sendAppendEntries(h);
-                    }
+                    sendToOtherAppendEntries(h);
                 }
 
                 break;
@@ -375,6 +465,7 @@ public class Raft extends GenericProtocol {
         }
     }
 
+    // delivers committed log entries to the StateMachine in order
     private void applyCommittedEntries() {
         while (lastApplied < commitIndex) {
             lastApplied++;
@@ -385,6 +476,96 @@ public class Raft extends GenericProtocol {
                     entry.getOpId(),
                     entry.getOperation()));
         }
+    }
+
+    private void uponElectionTimer(ElectionTimer timer, long timerId) {
+        if (timerId != electionTimerId) {
+            return;
+        }
+
+        if (role == RaftRole.LEADER) {
+            return;
+        }
+
+        logger.warn("Election timeout expired. Current role {}, current leader {}", role, currentLeader);
+
+        startElection();
+    }
+
+    private void uponHeartbeatTimer(HeartbeatTimer timer, long timerId) {
+        if (timerId != heartbeatTimerId) {
+            return;
+        }
+
+        if (role != RaftRole.LEADER) {
+            return;
+        }
+
+        logger.debug("Sending heartbeat for term {}", currentTerm);
+
+        for (Host h : membership) {
+            sendToOtherAppendEntries(h);
+        }
+    }
+
+    /*
+     * -------------------------------------------------------------------------
+     * Helpers
+     * ----------------------------------------------------------------------
+     */
+
+    private void resetElectionTimer() {
+        if (role == RaftRole.LEADER) {
+            return;
+        }
+
+        if (electionTimerId != -1) {
+            cancelTimer(electionTimerId);
+        }
+
+        electionTimerId = setupTimer(
+                new ElectionTimer(),
+                randomElectionTimeout());
+    }
+
+    private void startHeartbeatTimer() {
+        if (heartbeatTimerId != -1) {
+            cancelTimer(heartbeatTimerId);
+        }
+
+        heartbeatTimerId = setupPeriodicTimer(
+                new HeartbeatTimer(),
+                0,
+                heartbeatInterval);
+    }
+
+    private void cancelHeartbeatTimer() {
+        if (heartbeatTimerId != -1) {
+            cancelTimer(heartbeatTimerId);
+            heartbeatTimerId = -1;
+        }
+    }
+
+    private long randomElectionTimeout() {
+        long diff = electionTimeoutMax - electionTimeoutMin;
+        return electionTimeoutMin + random.nextInt((int) diff);
+    }
+
+    private void sendToOtherAppendEntries(Host h) {
+        if (h.equals(myself)) {
+            return;
+        }
+
+        sendAppendEntries(h);
+    }
+
+    private void sendToOther(ProtoMessage msg, Host h) {
+        if (h.equals(myself)) {
+            return;
+        }
+
+        openConnection(h);
+        sendMessage(msg, h);
     }
 
     private boolean logContainsEntry(int index, int term) {
