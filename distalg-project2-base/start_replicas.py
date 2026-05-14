@@ -179,7 +179,7 @@ def arrange_windows_2x2():
 replica_1 = """
 java -jar target/DistAlg.jar \\
   babel.address=127.0.0.1 \\
-  initial_membership=127.0.0.1:34000,127.0.0.1:34001,127.0.0.1:34003
+  initial_membership=127.0.0.1:34000,127.0.0.1:34001,127.0.0.1:34003 | tee raft_c9_Replica1.txt
 """
 
 replica_2 = """
@@ -187,7 +187,7 @@ java -jar target/DistAlg.jar \\
   babel.address=127.0.0.1 \\
   babel.port=34001 \\
   server_port=35001 \\
-  initial_membership=127.0.0.1:34000,127.0.0.1:34001,127.0.0.1:34003
+  initial_membership=127.0.0.1:34000,127.0.0.1:34001,127.0.0.1:34003 | tee raft_c9_Replica2.txt
 """
 
 replica_3 = """
@@ -195,7 +195,7 @@ java -jar target/DistAlg.jar \\
   babel.address=127.0.0.1 \\
   babel.port=34003 \\
   server_port=35003 \\
-  initial_membership=127.0.0.1:34000,127.0.0.1:34001,127.0.0.1:34003
+  initial_membership=127.0.0.1:34000,127.0.0.1:34001,127.0.0.1:34003 | tee raft_c9_Replica3.txt
 """
 
 client = """
@@ -204,7 +204,7 @@ cd client || {
     exec bash
 }
 
-bash exec.sh 9 1000 127.0.0.1:35000,127.0.0.1:35001,127.0.0.1:35003 50 50
+bash exec.sh 9 1000 127.0.0.1:35000,127.0.0.1:35001,127.0.0.1:35003 50 50 | tee raft_c9.txt
 """
 
 

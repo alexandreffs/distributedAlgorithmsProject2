@@ -1,0 +1,48 @@
+2026-05-14 10:53:15.746 [main] INFO  protocols.app.HashApp - Listening on 127.0.0.1:35000
+2026-05-14 10:53:16.138 [main] INFO  protocols.statemachine.StateMachine - Listening on 127.0.0.1:34000
+2026-05-14 10:53:16.186 [main] INFO  protocols.statemachine.StateMachine - Starting in ACTIVE. Membership: [127.0.0.1:34000, 127.0.0.1:34001, 127.0.0.1:34003]
+2026-05-14 10:53:16.187 [main] INFO  protocols.agreement.raft.Raft - Raft timers: heartbeat=500ms, electionTimeout=[2000, 6000]ms
+2026-05-14 10:53:16.195 [100-Raft] INFO  protocols.agreement.raft.Raft - Raft registered on shared channel 2, I am 127.0.0.1:34000
+2026-05-14 10:53:16.200 [100-Raft] INFO  protocols.agreement.raft.Raft - Raft joined. Membership: [127.0.0.1:34000, 127.0.0.1:34001, 127.0.0.1:34003]
+2026-05-14 10:53:16.281 [200-StateMachine] INFO  protocols.statemachine.StateMachine - Connection to 127.0.0.1:34001 is up
+2026-05-14 10:53:16.282 [200-StateMachine] INFO  protocols.statemachine.StateMachine - Connection to 127.0.0.1:34003 is up
+2026-05-14 10:53:16.347 [300-HashApp] INFO  protocols.app.HashApp - ClientUpEvent{client=127.0.0.1:57672}
+2026-05-14 10:53:16.383 [200-StateMachine] WARN  protocols.statemachine.StateMachine - No known leader yet. Request e9036deb-9abf-49ca-bf31-90f6fcc2b10a will stay pending.
+2026-05-14 10:53:16.383 [200-StateMachine] WARN  protocols.statemachine.StateMachine - No known leader yet. Request 542a4a7a-5e80-4aa0-8fe7-57f687aedc2a will stay pending.
+2026-05-14 10:53:16.383 [200-StateMachine] WARN  protocols.statemachine.StateMachine - No known leader yet. Request 03d8db8e-6d33-4b26-9dbb-2896710fc744 will stay pending.
+2026-05-14 10:53:18.833 [100-Raft] WARN  protocols.agreement.raft.Raft - Election timeout expired. Current role FOLLOWER, current leader null
+2026-05-14 10:53:18.833 [100-Raft] INFO  protocols.agreement.raft.Raft - Starting election for term 1
+2026-05-14 10:53:18.844 [100-Raft] INFO  protocols.agreement.raft.Raft - Became LEADER term 1
+2026-05-14 10:53:18.845 [200-StateMachine] INFO  protocols.statemachine.StateMachine - Leader changed from null to 127.0.0.1:34000
+2026-05-14 10:53:18.845 [200-StateMachine] INFO  protocols.statemachine.StateMachine - Resubmitting 3 pending local requests
+2026-05-14 10:53:21.479 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 10000, MAP_SIZE=3923, HASH=fb0d8fbc46b5c4bd02473b1f019ddd3f46cfccf11ce0f14c4030f3cb7113fd8f
+2026-05-14 10:53:22.939 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 20000, MAP_SIZE=6321, HASH=0059665f62644fd5133d761f8663cd26261ba51065c415464a240b86732a07f2
+2026-05-14 10:53:24.283 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 30000, MAP_SIZE=7761, HASH=4420d7223a1f5b3746260d52c42ecc0b2fae4a351c1eea78191fd9d5243f49a6
+2026-05-14 10:53:25.584 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 40000, MAP_SIZE=8676, HASH=a4e505315fe3c2a9b93625910f4f1ff892ce96cd78917dd9d66076b93e688587
+2026-05-14 10:53:26.876 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 50000, MAP_SIZE=9197, HASH=abcb1c143b3c4b22115cb1aa0c9af67367f2a6d188f3bf84551f0b4f8bb52dc0
+2026-05-14 10:53:28.152 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 60000, MAP_SIZE=9515, HASH=b4792bfa8abc24c27d465ecdb582fa7767805b3f60e962e9bf97d65106a926c8
+2026-05-14 10:53:29.452 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 70000, MAP_SIZE=9711, HASH=c2b2d9d44863d3fccad1462d7e7cef2ae648afe6fcb5849293a2078440063681
+2026-05-14 10:53:30.734 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 80000, MAP_SIZE=9820, HASH=fe1348cdc482a4e09588fab44d93eeacf0372a24b3901e9ae63b9d2156cee03a
+2026-05-14 10:53:32.017 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 90000, MAP_SIZE=9888, HASH=cf1bde7fb673e8c00b25098c5dd27ab0d4817a96aeed877174639bc08f26b74c
+2026-05-14 10:53:33.301 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 100000, MAP_SIZE=9933, HASH=ab3e9ef2163a42c1e39bed8ce2017bdd82fe7b47be2851a9eb88bca7a7c98ca4
+2026-05-14 10:53:34.606 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 110000, MAP_SIZE=9963, HASH=0a37f5adc6298d7d6ad2d294e812fedf0dddc13bed11a9f63d249f7628360757
+2026-05-14 10:53:35.893 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 120000, MAP_SIZE=9976, HASH=060f8b63ec204d110935f41efb50c2de9dff69bc58713cb91e130a2402232638
+2026-05-14 10:53:37.180 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 130000, MAP_SIZE=9987, HASH=6031e8bf6034bcd3b7d4e7efc1c7f6a133b92fa05f10a05e4b7de83ecd50f28e
+2026-05-14 10:53:38.472 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 140000, MAP_SIZE=9991, HASH=0771fb32ef268755c9460494069966b3240876c48da91da1715a6b7149cf429a
+2026-05-14 10:53:39.791 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 150000, MAP_SIZE=9996, HASH=8a025b8e00116d20432443d63c7eb80351de00e3a8133d267c9cb8bf5280a1f8
+2026-05-14 10:53:41.105 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 160000, MAP_SIZE=9999, HASH=6490ec771903f4bf62253b6f3eacbbe1ed09e0eeeadaa3bd4b31d2ef7ba78052
+2026-05-14 10:53:42.415 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 170000, MAP_SIZE=10000, HASH=ec955c01c800bffef468e009da8b6a725773c7d6b48e05efa45b3c4a5ba10276
+2026-05-14 10:53:43.703 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 180000, MAP_SIZE=10000, HASH=f9e9a2b1844a853e68419d5ff83aa21672ca2d5d238918249736945939317a83
+2026-05-14 10:53:45.022 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 190000, MAP_SIZE=10000, HASH=baaa2619cf2474ee44d04d5d0a12eab8431f238d9636d340870189dfe255fe72
+2026-05-14 10:53:46.319 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 200000, MAP_SIZE=10000, HASH=24d8297f77a67e2c8a9ee4f1930227ecef9e30ca7143729a00c1609f3f9b6a8c
+2026-05-14 10:53:47.613 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 210000, MAP_SIZE=10000, HASH=cfd4639bef13c8c6c3a2ecd70b0d67cef1ce1ce0403de466372a2a887f2c0310
+2026-05-14 10:53:48.912 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 220000, MAP_SIZE=10000, HASH=cce500914a752a7058b6b3c10da270746909243c4e14abf80c362a7221610807
+2026-05-14 10:53:50.228 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 230000, MAP_SIZE=10000, HASH=bfbba250fc466b4c1eeb11e40ddfae19d1958caff3efb58ecc61bfe8dea32ad1
+2026-05-14 10:53:52.155 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 240000, MAP_SIZE=10000, HASH=bacd25cc72f0d1a6743a1b5742fc1b49c93ffad58ba8faff98ee000cab93d706
+2026-05-14 10:53:54.268 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 250000, MAP_SIZE=10000, HASH=1184bed3bf384423fcd3def389ef398a5618778ea466fe7ff44daa936fba2301
+2026-05-14 10:53:56.373 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 260000, MAP_SIZE=10000, HASH=7b6456043e2048dc2e8fb7025ae6af2f7e4f7e643223087aee442d3dca3b79aa
+2026-05-14 10:53:58.456 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 270000, MAP_SIZE=10000, HASH=7968493f5f9e0bd7ddfd87cd478352a092b9f29feaf1388ca104e567e1a8c0bf
+2026-05-14 10:54:00.558 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 280000, MAP_SIZE=10000, HASH=344a0e63b231497866c0b99472d315703763cb0a5b4372044801089f864909cb
+2026-05-14 10:54:02.638 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 290000, MAP_SIZE=10000, HASH=bed12415251621ade214827fd356c09ce518b3f0f4d51198d9efc12c93a75751
+2026-05-14 10:54:04.866 [300-HashApp] INFO  protocols.app.HashApp - Current state N_OPS= 300000, MAP_SIZE=10000, HASH=e15563c603b223f79ba091a59f2a62ca6b0da91c09563a3bea44394500a1fd9c
+2026-05-14 10:54:05.235 [300-HashApp] INFO  protocols.app.HashApp - ClientDownEvent{client=127.0.0.1:57672, cause=null}
