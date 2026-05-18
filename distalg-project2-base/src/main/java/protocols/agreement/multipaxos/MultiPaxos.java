@@ -153,19 +153,6 @@ public class MultiPaxos extends GenericProtocol {
 
         logger.info("MultiPaxos joined. Membership: {}", membership);
 
-        /*
-         * Bootstrap case:
-         *
-         * There is no deterministic first leader.
-         * Since the system is starting from an empty state, there are no previous
-         * accepted values to recover, but instead of choosing membership.get(0),
-         * every replica starts a randomized leader timeout.
-         *
-         * The first replica whose timeout expires starts Phase 1.
-         * If it receives PrepareOk from a majority, it becomes leader.
-         *
-         * Later leader changes also use Phase 1.
-         */
         amLeader = false;
         currentLeader = null;
         leaderBallot = null;

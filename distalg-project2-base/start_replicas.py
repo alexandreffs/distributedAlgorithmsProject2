@@ -219,5 +219,5 @@ time.sleep(2)
 
 open_wsl_terminal("Client", client)
 
-time.sleep(3)
+time.sleep(2)
 arrange_windows_2x2()

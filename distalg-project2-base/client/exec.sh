@@ -13,4 +13,4 @@ java -Dlog4j.configurationFile=log4j2.xml \
 	-p hosts=$servers \
 	-p readproportion=${readsper} -p updateproportion=${writesper} \
 	"$@" \
-	2> client.log
+	2>&1 | tee client.log
